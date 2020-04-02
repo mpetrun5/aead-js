@@ -4,7 +4,7 @@ import {ChaCha20} from './chacha20';
 import {Poly1305} from './poly1305';
 
 export class AEAD {
-  public native: number;
+  public static native = ChaCha20.native;
   
   private chacha: ChaCha20;
   private poly: Poly1305;
@@ -20,7 +20,6 @@ export class AEAD {
     this.mode = -1;
     this.aadLen = 0;
     this.cipherLen = 0;
-    this.native = ChaCha20.native;
   }
 
   /**
@@ -29,7 +28,7 @@ export class AEAD {
    * @param {Buffer} key
    * @param {Buffer} iv - IV / packet sequence number.
    */
-  public init(key: Buffer, iv: Buffer): AEAD {
+  public init(key: Buffer, iv: Buffer): this {
     this.key.fill(0x00);
     this.chacha.init(key, iv, 0);
     this.chacha.encrypt(this.key);
@@ -48,7 +47,7 @@ export class AEAD {
    * 
    * @param {Buffer} aad
    */
-  public aad(data: Buffer): AEAD {
+  public aad(data: Buffer): this {
     if (this.mode === -1)
       throw new Error('Context is not initialized.');
 
@@ -164,7 +163,7 @@ export class AEAD {
   /**
    * Destroy the context.
    */
-  public destroy(): AEAD {
+  public destroy(): this {
     this.chacha.destroy();
     this.poly.destroy();
 

@@ -27,7 +27,7 @@ export class ChaCha20 {
    * @param {Buffer} nonce
    * @param {Number} counter
    */
-  public init(key: Buffer, nonce: Buffer, counter: number): ChaCha20 {
+  public init(key: Buffer, nonce: Buffer, counter: number): this {
     if (counter == null)
       counter = 0;
 
@@ -134,7 +134,7 @@ export class ChaCha20 {
   /**
    * Destroy context.
    */
-  public destroy(): ChaCha20 {
+  public destroy(): this {
     for (let i = 0; i < 16; i++) {
       this.state[i] = 0;
       this.stream[i] = 0;

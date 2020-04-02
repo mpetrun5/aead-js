@@ -23,7 +23,7 @@ export class Poly1305 {
    * Initialize poly1305 with a key.
    * @param {Buffer} key
    */
-  public init(key: Buffer): Poly1305 {
+  public init(key: Buffer): this {
     assert(key.length >= 32);
 
     // r &= 0xffffffc0ffffffc0ffffffc0fffffff
@@ -144,7 +144,7 @@ export class Poly1305 {
    * @param {Buffer} data
    */
 
-  public update(data: Buffer): Poly1305 {
+  public update(data: Buffer): this {
     if (this.fin === -1)
       throw new Error('Context is not initialized.');
 
