@@ -1,6 +1,6 @@
 import {Buffer} from "buffer";
 
-export interface EncryptResult {
-    cipher: Buffer,
-    mac: Buffer
+export interface IEncryptResult {
+  cipher: Buffer;
+  mac: Buffer;
 }

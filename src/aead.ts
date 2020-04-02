@@ -1,5 +1,5 @@
 import {Buffer} from 'buffer';
-import {EncryptResult} from './@types/safe-encrypt-result'
+import {IEncryptResult} from './@types/safe-encrypt-result'
 import {assert, writeU64} from './utils';
 import {ChaCha20} from './chacha20';
 import {Poly1305} from './poly1305';
@@ -297,8 +297,8 @@ export class AEAD {
    * @param {Buffer} msg
    * @param {Buffer?} aad
    */
-  public static safeEncrypt(key: Buffer, iv: Buffer, msg: Buffer, aad?: Buffer): EncryptResult {
-    let cipher = Buffer.from(msg);
+  public static safeEncrypt(key: Buffer, iv: Buffer, msg: Buffer, aad?: Buffer): IEncryptResult {
+    const cipher = Buffer.from(msg);
     const mac = AEAD.encrypt(key, iv, cipher, aad)
     return {
       cipher,
@@ -317,7 +317,7 @@ export class AEAD {
    * @returns {Buffer}
    */
   public static safeDecrypt(key: Buffer, iv: Buffer, cipher: Buffer, tag: Buffer, aad: Buffer): Buffer {
-    let msg = Buffer.from(cipher);
+    const msg = Buffer.from(cipher);
     if(AEAD.decrypt(key, iv, msg, tag, aad)){
       return msg;
     } else {
