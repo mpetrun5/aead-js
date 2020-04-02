@@ -2,7 +2,7 @@ import {Buffer} from "buffer";
 import {assert, readU32, qround, writeU32} from "./utils";
 
 export class ChaCha20 {
-  public native = 0;
+  public static native = 0;
 
   private readonly BIG_ENDIAN = new Int8Array(new Int16Array([1]).buffer)[0] === 0;
   private state: Uint32Array;

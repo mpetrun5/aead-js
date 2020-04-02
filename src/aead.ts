@@ -20,7 +20,7 @@ export class AEAD {
     this.mode = -1;
     this.aadLen = 0;
     this.cipherLen = 0;
-    this.native = this.chacha.native;
+    this.native = ChaCha20.native;
   }
 
   /**
