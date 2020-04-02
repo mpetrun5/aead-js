@@ -1,4 +1,5 @@
 import {Buffer} from 'buffer';
+import {EncryptResult} from './@types/safe-encrypt-result'
 import {assert, writeU64} from './utils';
 import {ChaCha20} from './chacha20';
 import {Poly1305} from './poly1305';
@@ -215,7 +216,33 @@ export class AEAD {
   }
 
   /**
+   * Authenticate data without decrypting.
+   * 
+   * @param {Buffer} key
+   * @param {Buffer} iv
+   * @param {Buffer} msg
+   * @param {Buffer} tag
+   * @param {Buffer?} aad
+   * @returns {Boolean}
+   */
+  public static auth(key: Buffer, iv: Buffer, msg: Buffer, tag: Buffer, aad?: Buffer): boolean {
+    const aead = new AEAD();
+
+    aead.init(key, iv);
+
+    if (aad)
+      aead.aad(aad);
+
+    aead.auth(msg);
+
+    return aead.verify(tag);
+  }
+
+  /**
    * Encrypt a piece of data.
+   * Changes original message to encrypted 
+   * one. Use safeEncrypt instead if you 
+   * want to keep the original message. 
    * 
    * @param {Buffer} key
    * @param {Buffer} iv
@@ -238,15 +265,18 @@ export class AEAD {
 
   /**
    * Decrypt a piece of data.
+   * Changes original cipher to decrypted 
+   * message. Use safeDecrypt instead if you 
+   * want to keep the original cipher. 
    * 
    * @param {Buffer} key
    * @param {Buffer} iv
-   * @param {Buffer} msg
+   * @param {Buffer} cipher
    * @param {Buffer} tag
    * @param {Buffer?} aad
    * @returns {Boolean}
    */
-  public static decrypt(key: Buffer, iv: Buffer, msg: Buffer, tag: Buffer, aad: Buffer): boolean {
+  public static decrypt(key: Buffer, iv: Buffer, cipher: Buffer, tag: Buffer, aad: Buffer): boolean {
     const aead = new AEAD();
 
     aead.init(key, iv);
@@ -254,32 +284,46 @@ export class AEAD {
     if (aad)
       aead.aad(aad);
 
-    aead.decrypt(msg);
+    aead.decrypt(cipher);
 
     return aead.verify(tag);
   }
 
   /**
-   * Authenticate data without decrypting.
+   * Encrypt message without changing it.
    * 
    * @param {Buffer} key
    * @param {Buffer} iv
    * @param {Buffer} msg
+   * @param {Buffer?} aad
+   */
+  public static safeEncrypt(key: Buffer, iv: Buffer, msg: Buffer, aad?: Buffer): EncryptResult {
+    let cipher = Buffer.from(msg);
+    const mac = AEAD.encrypt(key, iv, cipher, aad)
+    return {
+      cipher,
+      mac
+    }
+  }
+
+  /**
+   * Decrypt cipher without changing it.
+   * 
+   * @param {Buffer} key
+   * @param {Buffer} iv
+   * @param {Buffer} cipher
    * @param {Buffer} tag
    * @param {Buffer?} aad
-   * @returns {Boolean}
+   * @returns {Buffer}
    */
-  public static auth(key: Buffer, iv: Buffer, msg: Buffer, tag: Buffer, aad?: Buffer): boolean {
-    const aead = new AEAD();
-
-    aead.init(key, iv);
-
-    if (aad)
-      aead.aad(aad);
-
-    aead.auth(msg);
-
-    return aead.verify(tag);
+  public static safeDecrypt(key: Buffer, iv: Buffer, cipher: Buffer, tag: Buffer, aad: Buffer): Buffer {
+    let msg = Buffer.from(cipher);
+    if(AEAD.decrypt(key, iv, msg, tag, aad)){
+      return msg;
+    } else {
+      throw new Error('Cipher could not be decrypted.');
+    }
   }
+
 }
 
