@@ -1,7 +1,7 @@
 import {assert, writeU16, readU16} from "./utils";
 
 export class Poly1305 {
-  public native = 0;
+  public static native = 0;
 
   private r: Uint16Array;
   private h: Uint16Array;
