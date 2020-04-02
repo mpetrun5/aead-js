@@ -1,21 +1,17 @@
-/*!
- * aead.js - aead for bcrypto
- */
-
 import {Buffer} from 'buffer';
 import {assert, writeU64} from './utils';
 import {ChaCha20} from './chacha20';
 import {Poly1305} from './poly1305';
 
 export class AEAD {
-  public native;
+  public native: number;
   
-  private chacha;
-  private poly;
-  private key;
-  private mode;
-  private aadLen;
-  private cipherLen;
+  private chacha: ChaCha20;
+  private poly: Poly1305;
+  private key: Buffer;
+  private mode: number;
+  private aadLen: number;
+  private cipherLen: number;
   
   constructor() {
     this.chacha = new ChaCha20();
@@ -29,13 +25,11 @@ export class AEAD {
 
   /**
    * Initialize the AEAD with a key and iv.
+   * 
    * @param {Buffer} key
    * @param {Buffer} iv - IV / packet sequence number.
    */
-  init(key: Buffer, iv: Buffer): AEAD {
-    assert(Buffer.isBuffer(key));
-    assert(Buffer.isBuffer(iv));
-
+  public init(key: Buffer, iv: Buffer): AEAD {
     this.key.fill(0x00);
     this.chacha.init(key, iv, 0);
     this.chacha.encrypt(this.key);
@@ -51,9 +45,10 @@ export class AEAD {
   /**
    * Update the aad (will be finalized
    * on an encrypt/decrypt call).
+   * 
    * @param {Buffer} aad
    */
-  aad(data: Buffer): AEAD {
+  public aad(data: Buffer): AEAD {
     if (this.mode === -1)
       throw new Error('Context is not initialized.');
 
@@ -68,9 +63,10 @@ export class AEAD {
 
   /**
    * Encrypt a piece of data.
+   * 
    * @param {Buffer} data
    */
-  encrypt(data: Buffer): Buffer {
+  public encrypt(data: Buffer): Buffer {
     if (this.mode === -1)
       throw new Error('Context is not initialized.');
 
@@ -92,9 +88,10 @@ export class AEAD {
 
   /**
    * Decrypt a piece of data.
+   * 
    * @param {Buffer} data
    */
-  decrypt(data: Buffer): Buffer {
+  public decrypt(data: Buffer): Buffer {
     if (this.mode === -1)
       throw new Error('Context is not initialized.');
 
@@ -116,9 +113,10 @@ export class AEAD {
 
   /**
    * Authenticate data without decrypting.
+   * 
    * @param {Buffer} data
    */
-  auth(data: Buffer): Buffer {
+  public auth(data: Buffer): Buffer {
     if (this.mode === -1)
       throw new Error('Context is not initialized.');
 
@@ -141,7 +139,7 @@ export class AEAD {
    * Finalize the aead and generate a MAC.
    * @returns {Buffer} MAC
    */
-  final(): Buffer {
+  public final(): Buffer {
     if (this.mode === -1)
       throw new Error('Context is not initialized.');
 
@@ -156,7 +154,7 @@ export class AEAD {
     this.pad16(this.cipherLen);
     this.poly.update(len);
 
-    const mac:Buffer = this.poly.final();
+    const mac: Buffer = this.poly.final();
 
     this.destroy();
 
@@ -166,7 +164,7 @@ export class AEAD {
   /**
    * Destroy the context.
    */
-  destroy(): AEAD {
+  public destroy(): AEAD {
     this.chacha.destroy();
     this.poly.destroy();
 
@@ -182,11 +180,11 @@ export class AEAD {
 
   /**
    * Finalize and verify MAC against tag.
+   * 
    * @param {Buffer} tag
    * @returns {Boolean}
    */
-  verify(tag: Buffer): boolean {
-    assert(Buffer.isBuffer(tag));
+  public verify(tag: Buffer): boolean {
     assert(tag.length === 16);
 
     const mac = this.final();
@@ -204,7 +202,7 @@ export class AEAD {
    *
    * @param {Number} size
    */
-  private pad16(size: number) {
+  private pad16(size: number): void {
     const pos = size & 15;
 
     if (pos === 0)
@@ -219,13 +217,14 @@ export class AEAD {
 
   /**
    * Encrypt a piece of data.
+   * 
    * @param {Buffer} key
    * @param {Buffer} iv
    * @param {Buffer} msg
    * @param {Buffer?} aad
    * @returns {Buffer} tag
    */
-  static encrypt(key: Buffer, iv: Buffer, msg: Buffer, aad?: Buffer): Buffer {
+  public static encrypt(key: Buffer, iv: Buffer, msg: Buffer, aad?: Buffer): Buffer {
     const aead = new AEAD();
 
     aead.init(key, iv);
@@ -240,6 +239,7 @@ export class AEAD {
 
   /**
    * Decrypt a piece of data.
+   * 
    * @param {Buffer} key
    * @param {Buffer} iv
    * @param {Buffer} msg
@@ -247,7 +247,7 @@ export class AEAD {
    * @param {Buffer?} aad
    * @returns {Boolean}
    */
-  static decrypt(key: Buffer, iv: Buffer, msg: Buffer, tag: Buffer, aad: Buffer): boolean {
+  public static decrypt(key: Buffer, iv: Buffer, msg: Buffer, tag: Buffer, aad: Buffer): boolean {
     const aead = new AEAD();
 
     aead.init(key, iv);
@@ -262,6 +262,7 @@ export class AEAD {
 
   /**
    * Authenticate data without decrypting.
+   * 
    * @param {Buffer} key
    * @param {Buffer} iv
    * @param {Buffer} msg
@@ -269,7 +270,7 @@ export class AEAD {
    * @param {Buffer?} aad
    * @returns {Boolean}
    */
-  static auth(key: Buffer, iv: Buffer, msg: Buffer, tag: Buffer, aad?: Buffer): boolean {
+  public static auth(key: Buffer, iv: Buffer, msg: Buffer, tag: Buffer, aad?: Buffer): boolean {
     const aead = new AEAD();
 
     aead.init(key, iv);

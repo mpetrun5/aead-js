@@ -1,24 +1,14 @@
-/*!
- * poly1305.js - poly1305 for bcrypto
- *
- * Resources:
- *   https://en.wikipedia.org/wiki/Poly1305
- *   https://cr.yp.to/mac.html
- *   https://tools.ietf.org/html/rfc7539#section-2.5
- *   https://github.com/floodyberry/poly1305-donna/blob/master/poly1305-donna-16.h
- */
-
 import {assert, writeU16, readU16} from "./utils";
 
 export class Poly1305 {
   public native = 0;
 
-  private r;
-  private h;
-  private pad;
-  private buffer;
-  private fin;
-  private leftover;
+  private r: Uint16Array;
+  private h: Uint16Array;
+  private pad: Uint16Array;
+  private buffer: Buffer;
+  private fin: number;
+  private leftover: number;
 
   constructor() {
     this.r = new Uint16Array(10);
@@ -33,13 +23,13 @@ export class Poly1305 {
    * Initialize poly1305 with a key.
    * @param {Buffer} key
    */
-  init(key) {
-    assert(Buffer.isBuffer(key) && key.length >= 32);
+  public init(key: Buffer): Poly1305 {
+    assert(key.length >= 32);
 
     // r &= 0xffffffc0ffffffc0ffffffc0fffffff
     const t0 = readU16(key, 0);
     const t1 = readU16(key, 2);
-    const t2 = readU16(key, 4);
+    const t2 = readU16(key, 4); 
     const t3 = readU16(key, 6);
     const t4 = readU16(key, 8);
     const t5 = readU16(key, 10);
@@ -73,12 +63,12 @@ export class Poly1305 {
 
   /**
    * Process 16 byte blocks.
-   * @private
+   * 
    * @param {Buffer} data - Blocks.
    * @param {Number} bytes - Size.
    * @param {Number} m - Offset pointer.
    */
-  _blocks(data, bytes, m) {
+  private blocks(data: Buffer, bytes: number, m: number): void {
     const hibit = this.fin ? 0 : (1 << 11); // 1 << 128
     const d = new Uint32Array(10);
 
@@ -111,7 +101,7 @@ export class Poly1305 {
         d[i] = c;
 
         for (let j = 0; j < 10; j++) {
-          let a = this.h[j];
+          let a: number = this.h[j];
 
           if (j <= i)
             a *= this.r[i - j];
@@ -150,12 +140,11 @@ export class Poly1305 {
   /**
    * Update the MAC with data (will be
    * processed as 16 byte blocks).
+   * 
    * @param {Buffer} data
    */
 
-  update(data) {
-    assert(Buffer.isBuffer(data));
-
+  public update(data: Buffer): Poly1305 {
     if (this.fin === -1)
       throw new Error('Context is not initialized.');
 
@@ -180,7 +169,7 @@ export class Poly1305 {
       if (this.leftover < 16)
         return this;
 
-      this._blocks(this.buffer, 16, 0);
+      this.blocks(this.buffer, 16, 0);
       this.leftover = 0;
     }
 
@@ -188,7 +177,7 @@ export class Poly1305 {
     if (bytes >= 16) {
       const want = bytes & ~(16 - 1);
 
-      this._blocks(data, want, m);
+      this.blocks(data, want, m);
 
       m += want;
       bytes -= want;
@@ -208,7 +197,7 @@ export class Poly1305 {
    * Finalize and return a 16-byte MAC.
    * @returns {Buffer}
    */
-  final() {
+  public final(): Buffer {
     if (this.fin === -1)
       throw new Error('Context is not initialized.');
 
@@ -225,7 +214,7 @@ export class Poly1305 {
         this.buffer[i] = 0;
 
       this.fin = 1;
-      this._blocks(this.buffer, 16, 0);
+      this.blocks(this.buffer, 16, 0);
     }
 
     // Fully carry h.
@@ -302,7 +291,7 @@ export class Poly1305 {
   /**
    * Destroy the context.
    */
-  destroy() {
+  public destroy(): void {
     for (let i = 0; i < 10; i++) {
       this.r[i] = 0;
       this.h[i] = 0;
@@ -323,7 +312,7 @@ export class Poly1305 {
    * @param {Buffer} tag
    * @returns {Boolean}
    */
-  verify(tag) {
+  public verify(tag: Buffer): boolean {
     assert(Buffer.isBuffer(tag));
     assert(tag.length === 16);
 

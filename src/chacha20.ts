@@ -1,13 +1,3 @@
-/*!
- * chacha20.js - chacha20 for bcrypto
- *
- * Resources
- *   https://en.wikipedia.org/wiki/Chacha20
- *   https://tools.ietf.org/html/rfc7539#section-2
- *   https://cr.yp.to/chacha.html
- */
-
-
 import {Buffer} from "buffer";
 import {assert, readU32, qround, writeU32} from "./utils";
 
@@ -15,10 +5,10 @@ export class ChaCha20 {
   public native = 0;
 
   private readonly BIG_ENDIAN = new Int8Array(new Int16Array([1]).buffer)[0] === 0;
-  private state;
-  private stream;
-  private bytes;
-  private pos;
+  private state: Uint32Array;
+  private stream: Uint32Array;
+  private bytes: Uint8Array;
+  private pos: number;
 
   constructor() {
     this.state = new Uint32Array(16);
@@ -32,16 +22,15 @@ export class ChaCha20 {
 
   /**
    * Initialize chacha20 with a key, nonce, and counter.
+   * 
    * @param {Buffer} key
    * @param {Buffer} nonce
    * @param {Number} counter
    */
-  init(key, nonce, counter) {
+  public init(key: Buffer, nonce: Buffer, counter: number): ChaCha20 {
     if (counter == null)
       counter = 0;
 
-    assert(Buffer.isBuffer(key));
-    assert(Buffer.isBuffer(nonce));
     assert(Number.isSafeInteger(counter));
 
     if (key.length !== 16 && key.length !== 32)
@@ -90,18 +79,17 @@ export class ChaCha20 {
 
   /**
    * Encrypt/decrypt data.
+   * 
    * @param {Buffer} data - Will be mutated.
    * @returns {Buffer}
    */
-  encrypt(data) {
-    assert(Buffer.isBuffer(data));
-
+  public encrypt(data: Buffer): Buffer {
     if (this.pos === -1)
       throw new Error('Context is not initialized.');
 
     for (let i = 0; i < data.length; i++) {
       if ((this.pos & 63) === 0) {
-        this._block();
+        this.block();
         this.pos = 0;
       }
 
@@ -114,7 +102,7 @@ export class ChaCha20 {
   /**
    * Stir the stream.
    */
-  _block() {
+  private block(): void {
     for (let i = 0; i < 16; i++)
       this.stream[i] = this.state[i];
 
@@ -146,7 +134,7 @@ export class ChaCha20 {
   /**
    * Destroy context.
    */
-  destroy() {
+  public destroy(): ChaCha20 {
     for (let i = 0; i < 16; i++) {
       this.state[i] = 0;
       this.stream[i] = 0;
@@ -164,14 +152,12 @@ export class ChaCha20 {
 
   /**
    * Derive key with XChaCha20.
+   * 
    * @param {Buffer} key
    * @param {Buffer} nonce
    * @returns {Buffer}
    */
-  static derive(key, nonce) {
-    assert(Buffer.isBuffer(key));
-    assert(Buffer.isBuffer(nonce));
-
+  public static derive(key: Buffer, nonce: Buffer): Buffer {
     if (key.length !== 16 && key.length !== 32)
       throw new RangeError('Invalid key size.');
 
