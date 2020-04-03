@@ -137,5 +137,29 @@ describe('AEAD (ChaCha20+Poly1305)', function() {
         assert(AEAD.decrypt(key, nonce, Buffer.from(data), tag, aad));
       }
     });
+
+    it(`should do one-shot encrypt and decrypt without changing original message (${text})`, () => {
+      const data = Buffer.from(input);
+      const original_data = data
+      const result = AEAD.safeEncrypt(key, nonce, data, aad);
+
+      assert.bufferEqual(result['cipher'], output);
+      assert.bufferEqual(result['mac'], tag);
+      assert.bufferEqual(data, original_data)
+
+      assert(AEAD.auth(key, nonce, result['cipher'], tag, aad));
+
+      const original_cipher = result['cipher']
+      const decryptedMessage = AEAD.safeDecrypt(key, nonce, result['cipher'], tag, aad);
+      assert.bufferEqual(decryptedMessage, input);
+      assert.bufferEqual(result['cipher'], original_cipher)
+
+      key[0] ^= 1;
+      assert.throws(
+        () => {AEAD.safeDecrypt(key, nonce, Buffer.from(data), tag, key)},
+        Error,
+        'Cipher could not be decrypted'
+      );
+    });
   }
 });
